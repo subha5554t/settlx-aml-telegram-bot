@@ -3,19 +3,29 @@ const state = require("../bot/state");
 const db = require("../db");
 const commands = require("../bot/commands");
 
-const API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
+const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`;
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
+/**
+ * Send message to Telegram chat
+ */
 async function send(chatId, text) {
   try {
-    await axios.post(`${API}/sendMessage`, {
+    await axios.post(`${TELEGRAM_API}/sendMessage`, {
       chat_id: chatId,
       text
     });
   } catch (err) {
-    console.error("❌ Send failed:", err.response?.data || err.message);
+    console.error(
+      "❌ Telegram send failed:",
+      err.response?.data || err.message
+    );
   }
 }
 
+/**
+ * Main Telegram update handler
+ */
 async function handle(update) {
   if (!update.message) return;
 
@@ -23,13 +33,13 @@ async function handle(update) {
   const text = update.message.text?.trim();
   if (!text) return;
 
-  console.log("➡️ Message:", text);
+  console.log("➡️ Telegram message:", text);
 
   const userId = await db.getOrCreateUser(chatId);
   const session = state.get(chatId);
 
   // ======================
-  // STATE FLOW (ADD-NEW)
+  // TRACKING STATE FLOW
   // ======================
   if (session) {
     if (session.step === "chain") {
@@ -62,7 +72,7 @@ async function handle(update) {
       state.clear(chatId);
       return send(
         chatId,
-        `✅ Success, now tracking ${session.label} on ${session.chain.toUpperCase()}`
+        `✅ Success, now tracking "${session.label}" on ${session.chain.toUpperCase()}`
       );
     }
   }
@@ -82,47 +92,45 @@ async function handle(update) {
     return send(chatId, commands.help);
   }
 
-// ======================
-// /check COMMAND
-// ======================
-if (text.startsWith("/check")) {
-  const parts = text.split(" ");
+  // ======================
+  // /check COMMAND
+  // ======================
+  if (text.startsWith("/check")) {
+    const parts = text.split(" ");
 
-  if (parts.length !== 3) {
-    return send(
-      chatId,
-      "❌ Usage:\n/check <chain> <wallet>\n\nExample:\n/check eth 0xd8dA6B..."
-    );
+    if (parts.length !== 3) {
+      return send(
+        chatId,
+        "❌ Usage:\n/check <chain> <wallet>\n\nExample:\n/check eth 0xd8dA6B..."
+      );
+    }
+
+    const chain = parts[1].toLowerCase();
+    const address = parts[2];
+
+    try {
+      const response = await axios.post(`${BASE_URL}/check`, {
+        chain,
+        targetAddress: address
+      });
+
+      const r = response.data;
+
+      return send(
+        chatId,
+        `🔍 Wallet Risk Check\n\n` +
+          `Chain: ${chain.toUpperCase()}\n` +
+          `Address: ${address}\n\n` +
+          `Risk Score: ${r.riskScore}\n` +
+          `Risk Level: ${r.riskLevel}\n` +
+          `Reasons: ${r.reasons?.join(", ") || "N/A"}\n\n` +
+          `🔗 Explorer:\n${r.explorerLink}`
+      );
+    } catch (err) {
+      console.error("Check error:", err.response?.data || err.message);
+      return send(chatId, "⚠️ Failed to check wallet. Please try again.");
+    }
   }
-
-  const chain = parts[1].toLowerCase();
-  const address = parts[2];
-
-  try {
-    const response = await axios.post("http://localhost:3000/check", {
-      chain,
-      targetAddress: address
-    });
-
-    const r = response.data;
-
-    return send(
-      chatId,
-      `🔍 Wallet Risk Check\n\n` +
-        `Chain: ${chain.toUpperCase()}\n` +
-        `Address: ${address}\n\n` +
-        `Risk Score: ${r.riskScore}\n` +
-        `Risk Level: ${r.riskLevel}\n` +
-        `Reasons: ${r.reasons.join(", ") || "N/A"}\n\n` +
-        `🔗 Explorer:\n${r.explorerLink}`
-    );
-  } catch (err) {
-    console.error("Check error:", err.response?.data || err.message);
-    return send(chatId, "⚠️ Failed to check wallet.");
-  }
-}
-
-
 
   // ======================
   // TRACKING COMMANDS
@@ -167,7 +175,13 @@ if (text.startsWith("/check")) {
     return send(chatId, "❌ Unknown tracking command");
   }
 
+  // ======================
+  // FALLBACK
+  // ======================
   return send(chatId, "❌ Unknown command.\nUse /menu to see available options.");
 }
 
-module.exports = { handle };
+module.exports = {
+  handle,
+  send
+};
