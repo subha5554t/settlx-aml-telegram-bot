@@ -18,6 +18,7 @@ Built for **engineering evaluation, backend assessment, and system design discus
 ## ✨ Key Features
 
 ### 🔍 Wallet Risk Analysis (`/check`)
+
 - Risk score (0–100)
 - Risk level (Low / Medium / High)
 - Clear reasons for the score
@@ -33,13 +34,14 @@ Copy code
 ---
 
 ### 👀 Wallet Tracking & Alerts (`/tracking`)
+
 Track wallets and receive **Telegram alerts** when new on-chain activity occurs.
 
-**Actions**
-- ➕ Add wallet
+**Supported actions**
+- ➕ Add a wallet to tracking
 - 📄 View tracked wallets
-- 🗑️ Remove wallet (soft deactivate)
-- ⏸️ Pause tracking
+- 🗑️ Remove a wallet (soft deactivation)
+- ⏸️ Pause wallet tracking
 
 **Commands**
 /tracking add-new
@@ -65,13 +67,15 @@ Copy code
 
 ## 🧠 AML Risk Scoring Logic (Heuristic)
 
-- Wallet age
-- Transaction volume
-- Recent activity
-- Inflow vs outflow patterns
-- Inactive / low-activity signals
+The bot uses **simple, explainable heuristics**, including:
 
-> Demo-oriented scoring. Not for regulatory AML enforcement.
+- Wallet age
+- Transaction history size
+- Recent on-chain activity
+- Inflow vs outflow behavior
+- Inactive or low-activity wallets
+
+> Scores are **demo-oriented** and not intended for regulatory AML enforcement.
 
 ---
 
@@ -104,25 +108,11 @@ Copy code
 
 ---
 
-## 📸 Screenshots
+## ⚙️ Environment Configuration
 
-screenshots/
-├── bot-start.png
-├── wallet-check.png
-├── tracking-add.png
-└── alert-message.png
+Create a `.env` file:
 
-scss
-Copy code
-
-```md
-![Wallet Check](screenshots/wallet-check.png)
-![Tracking Alert](screenshots/alert-message.png)
-⚙️ Environment Configuration
-Create a .env file:
-
-env
-Copy code
+```env
 TELEGRAM_BOT_TOKEN=your_bot_token
 ETHERSCAN_API_KEY=your_etherscan_key
 BASE_URL=http://localhost:3000
@@ -132,13 +122,13 @@ Copy code
 npm install
 node src/server.js
 ⚠️ Known Limitations
-ERC-20 tokens and swaps not decoded
+ERC-20 tokens and swaps are not decoded
 
 Free API rate limits apply
 
-Demo-only AML logic
+Demo-focused AML logic only
 
-Not for real compliance use
+Not suitable for real compliance use
 
 👤 Author
 Subhadip Mahanty
@@ -149,7 +139,5 @@ GitHub: https://github.com/subha5554t
 Telegram Bot: https://t.me/SettlX_AML_Bot
 
 📄 Disclaimer
-This is a demo AML project for learning and evaluation only.
-Not intended for real-world financial compliance.
-
-Copy code
+This is a demo AML project built for learning and evaluation purposes only.
+It must not be used for real-world financial compliance.
