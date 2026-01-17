@@ -25,10 +25,11 @@ async function getWalletTransactions(address) {
   return res.data.result;
 }
 
+
 /**
  * Build wallet metrics required for AML-style heuristics
  */
-function buildWalletMetrics(txs) {
+function buildWalletMetrics(txs, targetAddress) {
   if (!txs.length) {
     return {
       walletAgeDays: 0,
@@ -39,12 +40,14 @@ function buildWalletMetrics(txs) {
     };
   }
 
+  const wallet = targetAddress.toLowerCase();
   const now = Date.now() / 1000;
-  const firstTx = txs[0];
-  const walletAgeDays = (now - firstTx.timeStamp) / 86400;
+
+  const firstTxTime = Number(txs[0].timeStamp);
+  const walletAgeDays = (now - firstTxTime) / 86400;
 
   const recentTxs = txs.filter(
-    tx => now - tx.timeStamp < 86400 // last 24 hours
+    tx => now - Number(tx.timeStamp) < 86400 // last 24 hours
   );
 
   let inflow = 0;
@@ -54,9 +57,11 @@ function buildWalletMetrics(txs) {
     const eth = Number(tx.value) / 1e18;
     if (eth === 0) continue;
 
-    if (tx.to && tx.to.toLowerCase() === tx.to) {
+    if (tx.to && tx.to.toLowerCase() === wallet) {
       inflow += eth;
-    } else {
+    }
+
+    if (tx.from && tx.from.toLowerCase() === wallet) {
       outflow += eth;
     }
   }
@@ -69,6 +74,7 @@ function buildWalletMetrics(txs) {
     outflow
   };
 }
+
 
 module.exports = {
   getWalletBalance,
