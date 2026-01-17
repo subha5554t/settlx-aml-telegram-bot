@@ -2,35 +2,37 @@ const { ethers } = require("ethers");
 const axios = require("axios");
 
 /**
- * Fetch wallet balance using public RPC
- */
-async function getWalletBalance(rpcUrl, address) {
-  const provider = new ethers.JsonRpcProvider(rpcUrl);
-  const balanceWei = await provider.getBalance(address);
-  return Number(ethers.formatEther(balanceWei));
-}
-
-/**
- * Fetch full transaction history using FREE Etherscan API
- * This is acceptable and commonly used in demos/interviews
+ * Fetch wallet transactions using ETHERSCAN API V2 (FREE)
  */
 async function getWalletTransactions(address) {
-  const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&sort=asc&apikey=${process.env.ETHERSCAN_API_KEY}`;
-  const res = await axios.get(url);
+  const url = "https://api.etherscan.io/v2/api";
 
-  if (res.data.status !== "1") {
+  const res = await axios.get(url, {
+    params: {
+      chainId: 1, // Ethereum mainnet
+      module: "account",
+      action: "txlist",
+      address,
+      startblock: 0,
+      endblock: 99999999,
+      sort: "asc",
+      apikey: process.env.ETHERSCAN_API_KEY
+    }
+  });
+
+  if (!res.data || res.data.status !== "1") {
+    console.warn("Etherscan V2 returned no tx data:", res.data?.result);
     return [];
   }
 
   return res.data.result;
 }
 
-
 /**
  * Build wallet metrics required for AML-style heuristics
  */
 function buildWalletMetrics(txs, targetAddress) {
-  if (!txs.length) {
+  if (!txs || txs.length === 0) {
     return {
       walletAgeDays: 0,
       txCount: 0,
@@ -41,13 +43,13 @@ function buildWalletMetrics(txs, targetAddress) {
   }
 
   const wallet = targetAddress.toLowerCase();
-  const now = Date.now() / 1000;
+  const now = Math.floor(Date.now() / 1000);
 
   const firstTxTime = Number(txs[0].timeStamp);
   const walletAgeDays = (now - firstTxTime) / 86400;
 
   const recentTxs = txs.filter(
-    tx => now - Number(tx.timeStamp) < 86400 // last 24 hours
+    tx => now - Number(tx.timeStamp) <= 86400
   );
 
   let inflow = 0;
@@ -60,7 +62,6 @@ function buildWalletMetrics(txs, targetAddress) {
     if (tx.to && tx.to.toLowerCase() === wallet) {
       inflow += eth;
     }
-
     if (tx.from && tx.from.toLowerCase() === wallet) {
       outflow += eth;
     }
@@ -75,9 +76,7 @@ function buildWalletMetrics(txs, targetAddress) {
   };
 }
 
-
 module.exports = {
-  getWalletBalance,
   getWalletTransactions,
   buildWalletMetrics
 };
