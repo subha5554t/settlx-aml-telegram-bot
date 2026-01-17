@@ -9,34 +9,33 @@ router.post("/", async (req, res) => {
   try {
     const { chain, targetAddress } = req.body;
 
-    // Validation
+    // Basic validation
     if (!chain || !targetAddress) {
-      return res.status(400).json({
-        error: "Missing chain or targetAddress"
-      });
+      return res.status(400).json({ error: "Missing chain or targetAddress" });
     }
 
-    // Demo scope: ETH only
+    // For now, we improve ETH-based chains only (acceptable scope)
     if (chain !== "eth") {
       return res.json({
         riskScore: 0,
         riskLevel: "Low",
-        reasons: ["Chain not supported in demo"],
-        walletMetrics: {},
+        reasons: ["Limited support for this chain in demo"],
+        recentActivity: [],
         explorerLink: explorer(chain, targetAddress)
       });
     }
 
-    // 🔥 RPC-based wallet metrics (GUARANTEED DATA)
-    const metrics = await evm.buildWalletMetricsRPC(
-      process.env.ETH_RPC,
-      targetAddress
-    );
+    // 1. Fetch wallet transactions (FREE Etherscan API)
+    const txs = await evm.getWalletTransactions(targetAddress);
 
-    // AML heuristic scoring
+    // 2. Build wallet-level metrics
+    const metrics = evm.buildWalletMetrics(txs, targetAddress);
+
+    // 3. Score AML risk using wallet behavior
     const scored = risk.score(metrics);
 
-    return res.json({
+    // 4. Respond with meaningful data
+    res.json({
       ...scored,
       walletMetrics: metrics,
       explorerLink: explorer(chain, targetAddress)
@@ -44,7 +43,7 @@ router.post("/", async (req, res) => {
 
   } catch (err) {
     console.error("Check API error:", err.message);
-    return res.status(500).json({
+    res.status(500).json({
       error: "Failed to evaluate wallet risk"
     });
   }
