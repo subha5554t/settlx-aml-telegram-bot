@@ -1,81 +1,86 @@
-SETTL X AML Telegram Bot
+🚀 SETTL X AML Telegram Bot
 
-A demo AML (Anti-Money Laundering) Telegram bot that performs heuristic wallet risk analysis and on-chain activity tracking using free blockchain data.
+A Telegram-based AML demo bot that performs wallet risk analysis and on-chain activity tracking using free blockchain data and heuristic logic.
 
-Built for engineering evaluation and system design discussion.
+Designed for engineering evaluation, backend discussion, and system design review.
 
-Features
-🔍 Wallet Risk Check (/check)
+✨ What This Bot Does
+🔍 Wallet Risk Analysis
+
+Check the AML-style risk of any wallet:
 
 Risk score (0–100)
 
 Risk level (Low / Medium / High)
 
-Reason-based explanation
+Clear reasons behind the score
 
-Explorer link
+Direct blockchain explorer link
 
-👀 Wallet Tracking (/tracking)
+Command:
 
-Track wallets for native ETH transfers
-
-Receive Telegram alerts on activity
-
-Supports:
-
-Add wallet
-
-View tracked wallets
-
-Remove wallet
-
-Pause wallet tracking
-
-Supported Chains
-
-Ethereum (supported)
-
-Base, Avalanche, Solana (planned)
-
-Tracking currently focuses on native ETH transfers only.
-ERC-20 and swap tracking can be added later.
-
-Telegram Commands
-Core
-/start
-/menu
-/help
-
-Wallet Check
 /check eth <wallet_address>
 
-Tracking
+👀 Wallet Tracking & Alerts
+
+Track wallets and receive Telegram alerts on new on-chain activity.
+
+You can:
+
+Add wallets to track
+
+View all tracked wallets
+
+Remove a wallet
+
+Pause tracking temporarily
+
+Commands:
+
 /tracking add-new
 /tracking view-tracked
 /tracking remove <label>
 /tracking pause <label>
 
-AML Risk Logic
 
-Uses simple heuristic rules, such as:
+Tracking currently focuses on native ETH transfers for reliability and simplicity.
 
-Wallet age
+⛓️ Supported Networks
 
-Transaction count
+✅ Ethereum (fully supported)
 
-Recent activity
+🟡 Base, Avalanche, Solana (planned)
+
+🧠 How AML Scoring Works
+
+This bot uses transparent heuristic rules, not paid AML services.
+
+Examples:
+
+Wallet age (new vs old)
+
+Transaction history size
+
+Recent on-chain activity
 
 Inflow vs outflow behavior
 
-Inactive wallets
+Inactive or empty wallets
 
-Scores are tuned for demo purposes, not real AML enforcement.
+Scores are demo-oriented and meant to show reasoning, not regulatory accuracy.
 
-Architecture (High Level)
-Telegram → Express API → Services → SQLite DB
-                       → Polling Worker → Alerts
+🏗️ System Overview
+Telegram Bot
+   ↓
+Express API
+   ↓
+Services (Risk, EVM, Telegram)
+   ↓
+SQLite Database
+   ↓
+Polling Worker → Alerts
 
-Tech Stack
+🛠️ Tech Stack
 
 Node.js
 
@@ -87,30 +92,38 @@ ethers.js
 
 Telegram Bot API
 
-Environment Variables
+Etherscan API (free tier)
+
+⚙️ Environment Setup
+
+Create a .env file:
+
 TELEGRAM_BOT_TOKEN=your_bot_token
 ETHERSCAN_API_KEY=your_etherscan_key
 BASE_URL=http://localhost:3000
 
-Run Locally
+▶️ Run Locally
 npm install
 node src/server.js
 
-Known Limitations
+⚠️ Known Limitations
 
-No ERC-20 or swap decoding
+ERC-20 tokens and swaps not decoded
 
 Free API rate limits
 
 Demo-only AML logic
 
-Author
+👤 Author
 
 Subhadip Mahanty
+Blockchain & Backend Developer
+
 GitHub: https://github.com/subha5554t
 
 Telegram Bot: https://t.me/SettlX_AML_Bot
 
-Disclaimer
+📄 Disclaimer
 
-This project is a demo AML system and should not be used for real-world compliance.
+This is a demo AML project for learning and evaluation purposes only.
+Not intended for real-world compliance or regulatory use.
