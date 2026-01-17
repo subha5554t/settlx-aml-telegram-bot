@@ -70,6 +70,26 @@ module.exports = {
     });
   },
 
+  removeTrackedByLabel(user_id, label) {
+  return new Promise((res) => {
+    db.run(
+      `
+      UPDATE tracked_addresses
+      SET is_active = 0
+      WHERE user_id = ?
+        AND LOWER(label) = LOWER(?)
+        AND is_active = 1
+      `,
+      [user_id, label],
+      function () {
+        // this.changes = number of rows updated
+        res(this.changes > 0);
+      }
+    );
+  });
+},
+
+
   updateCursor(id, cursor) {
     db.run(
       "UPDATE tracked_addresses SET last_seen_cursor=? WHERE id=?",
