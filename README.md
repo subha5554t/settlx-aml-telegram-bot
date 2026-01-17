@@ -1,302 +1,244 @@
-# SETTL X AML Telegram Bot 🛡️
+SETTL X AML Telegram Bot
 
-## 🤖 Live Telegram Bot
+A demo AML (Anti-Money Laundering) Telegram bot that performs heuristic wallet risk analysis and on-chain activity tracking across multiple blockchains.
 
-You can interact with the bot here:
+This project is built for engineering evaluation and system design discussion, not for production AML enforcement.
 
-👉 **https://t.me/SettlX_AML_Bot**
+🚀 Features
+🔍 Wallet Risk Check (/check)
 
-Available features:
-- Wallet AML-style risk check (`/check`)
-- Wallet tracking & alerts (`/tracking`)
-- Multi-chain support (Ethereum, Base, Avalanche, Solana)
+Analyze a wallet using on-chain heuristics
+
+Outputs:
+
+Risk score (0–100)
+
+Risk level (Low / Medium / High)
+
+Clear reasons for the score
+
+Explorer link
+
+👀 Wallet Tracking (/tracking)
+
+Track wallets for native ETH transfers
+
+Receive Telegram alerts on activity
+
+Supported actions:
+
+Add wallet
+
+View tracked wallets
+
+Remove wallet (soft-deactivation)
+
+⛓️ Supported Chains
+Chain	Status
+Ethereum	✅ Fully supported
+Base	⚠️ Planned
+Avalanche	⚠️ Planned
+Solana	⚠️ Planned
+
+Tracking currently focuses on native ETH transfers for reliability and simplicity.
+ERC-20 tokens and swaps can be added as an enhancement.
+
+🤖 Telegram Bot Commands
+Core Commands
+/start       → Welcome message
+/menu        → Show available commands
+/help        → Usage guide
+/check       → Wallet AML risk check
+/tracking    → Wallet tracking menu
+
+/check Usage
+/check eth <wallet_address>
 
 
+Example:
 
-A demo **AML (Anti-Money Laundering) Telegram bot** that performs **wallet risk checks** and **on-chain activity tracking** across multiple blockchains using **heuristic analysis** (no paid AML providers).
-
-> ⚠️ Disclaimer  
-> This project is for **educational and demonstration purposes only**.  
-> It does **not** provide real AML, compliance, or legal guarantees.
-
----
-
-## 🎯 Project Objective
-
-The goal of this project is to build an **internship-grade backend system** that:
-
-- Allows users to check wallet risk via Telegram
-- Allows users to track wallets and receive alerts on new activity
-- Demonstrates polling-based blockchain indexing
-- Uses heuristic AML scoring (no paid AML services)
-
----
-
-## ⛓️ Supported Blockchains
-
-- Ethereum (ETH)
-- Base
-- Avalanche (AVAX)
-- Solana (SOL)
-
----
-
-## 🤖 Telegram Bot Commands
-
-### Core Commands
-
-| Command | Description |
-|------|------------|
-| `/start` | Welcome message |
-| `/menu` | Show available commands |
-| `/help` | Usage guide |
-| `/check` | Wallet risk check |
-| `/tracking` | Wallet tracking features |
-
----
-
-## 🔍 `/check` – Wallet Risk Check
-
-### Usage
-/check <chain> <wallet_address>
-
-shell
-Copy code
-
-### Example
 /check eth 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
 
-yaml
-Copy code
-
-### Response Includes
-- Risk score (0–100)
-- Risk level (Low / Medium / High)
-- Heuristic reasons
-- Blockchain explorer link
-
----
-
-## 👀 `/tracking` – Wallet Tracking
-
-### Tracking Menu
-/tracking
-
-shell
-Copy code
-
-### Sub-Commands
+/tracking Commands
 /tracking add-new
 /tracking view-tracked
 /tracking remove <label>
-/tracking pause <label>
 
-yaml
-Copy code
+🧠 AML Risk Scoring (Heuristic)
 
----
+This bot uses behavioral heuristics, not paid AML services.
 
-### ➕ Add New Wallet (Step-by-Step)
+Signals Used
 
-1. `/tracking add-new`
-2. Select chain (eth / base / avax / sol)
-3. Enter wallet address
-4. Enter label
-5. Enter minimum amount (0 allowed)
-6. Wallet starts tracking
+Wallet age
 
----
+Transaction history size
 
-## 🧠 AML Heuristic Risk Scoring
+Recent activity (24h)
 
-This project uses **simple heuristic rules**, such as:
+Inflow vs outflow behavior
 
-- Limited RPC visibility → higher risk
-- Inactive or new wallet → higher risk
-- RPC fallback mode → medium risk
+Wallet inactivity
 
-### Risk Levels
-- **0–30** → Low Risk  
-- **31–60** → Medium Risk  
-- **61–100** → High Risk  
+Example Reasons
 
-No external or paid AML APIs are used.
+New or inactive wallet
 
----
+Low transaction history
 
-## ⚙️ Backend Architecture
+Recent on-chain activity
 
-### Tech Stack
-- Node.js
-- Express.js
-- Telegram Bot API (Webhook)
-- SQLite
-- ethers.js (EVM)
-- @solana/web3.js (Solana)
+Net inflow detected
 
----
+Scores are tuned for demo visibility, not real AML thresholds.
 
-## 📁 Project Structure
+🏗️ Architecture Overview
+Telegram
+   ↓ Webhook
+Express API
+   ↓
+Services (EVM, Risk, Telegram)
+   ↓
+SQLite Database
+   ↓
+Background Worker (Polling)
 
-settlx-aml-bot/
-├── src/
-│ ├── api/
-│ ├── bot/
-│ ├── services/
-│ ├── workers/
-│ ├── db/
-│ ├── utils/
-│ ├── config/
-│ └── server.js
-├── .env.example
-├── .gitignore
-├── package.json
-└── README.md
+🧩 Tech Stack
 
-yaml
-Copy code
+Node.js
 
----
+Express
 
-## 🔁 Tracking Engine (Polling Based)
+SQLite
 
-### Why Polling?
-- No paid indexers
-- Full control over cost
-- Works with public RPCs
-- Deterministic behavior
+ethers.js
 
-### How It Works
-1. Worker runs every 30–60 seconds (EVM)
-2. Fetches blocks since last cursor
-3. Matches transactions with tracked wallets
-4. Applies minimum amount filter
-5. Deduplicates alerts
-6. Sends Telegram alert
-7. Updates cursor
+Axios
 
-### Solana
-- Uses `getSignaturesForAddress`
-- Polls every 2–5 minutes
-- Cursor = last processed signature
+Telegram Bot API
 
----
+🗃️ Database Schema (SQLite)
+users
+field	description
+id	Primary key
+telegram_user_id	Unique Telegram ID
+created_at	Timestamp
+tracked_addresses
+field	description
+id	Primary key
+user_id	FK → users
+chain	eth / base / avax / sol
+address	Wallet address
+label	User-defined label
+min_amount	Alert threshold
+is_active	Soft delete flag
+last_seen_cursor	Polling cursor
+alert_events
+field	description
+tracked_address_id	FK
+tx_hash_or_sig	Tx hash
+timestamp	Event time
+🔁 Tracking Engine (Polling)
 
-## 🗃️ Database Schema
+Runs every 60 seconds
 
-### users
-| Field | Description |
-|---|---|
-| id | Primary key |
-| telegram_user_id | Telegram ID |
+Fetches new blocks since last cursor
 
-### tracked_addresses
-| Field | Description |
-|---|---|
-| chain | eth / base / avax / sol |
-| address | Wallet address |
-| label | Friendly name |
-| min_amount | Alert threshold |
-| last_seen_cursor | Block / signature |
+Matches from / to addresses
 
-### alert_events
-| Field | Description |
-|---|---|
-| tracked_address_id | FK |
-| tx_hash_or_sig | Deduplication key |
-| timestamp | Event time |
+Applies:
 
----
+Minimum amount filter
 
-## 🔐 Deduplication Logic
+Deduplication
 
-Alerts are deduplicated using:
+Sends Telegram alert
 
-tracked_address_id + tx_hash_or_signature
+Updates cursor
 
-yaml
-Copy code
+Example Alert
+🚨 ETH Transfer Detected
 
-This ensures:
-- No duplicate alerts
-- Safe polling restarts
-- Idempotent processing
+Wallet: MyWallet
+Direction: Incoming
+Amount: 1.25 ETH
+Tx: https://etherscan.io/tx/0x...
 
----
+💾 Data Persistence
 
-## 💰 Cost Control Rules
+Uses SQLite for simplicity
 
-- Max wallets per user (recommended: 20)
-- Max total wallets (recommended: 200)
-- Slower polling for Solana
-- Strict deduplication
-- Public RPC usage only
+Soft-delete (is_active = 0) for tracking removal
 
----
+Preserves alert history
 
-## 🚀 Local Setup
+No external DB dependency
 
-### 1️⃣ Clone Repository
-```bash
-git clone https://github.com/subha5554t/settlx-aml-telegram-bot.git
-cd settlx-aml-telegram-bot
-2️⃣ Install Dependencies
-bash
-Copy code
+⚙️ Environment Variables
+
+Create a .env file:
+
+TELEGRAM_BOT_TOKEN=your_bot_token
+ETHERSCAN_API_KEY=your_etherscan_key
+BASE_URL=http://localhost:3000
+
+
+On Render or other platforms, environment variables must be added in the dashboard (not via .env).
+
+▶️ Run Locally
 npm install
-3️⃣ Environment Variables
-Create .env (do not commit):
-
-env
-Copy code
-PORT=3000
-TELEGRAM_BOT_TOKEN=YOUR_BOT_TOKEN
-
-ETH_RPC=https://cloudflare-eth.com
-BASE_RPC=https://base.publicnode.com
-AVAX_RPC=https://avalanche.publicnode.com
-SOL_RPC=https://api.mainnet-beta.solana.com
-4️⃣ Run Server
-bash
-Copy code
 node src/server.js
-5️⃣ Expose via ngrok
-bash
-Copy code
-ngrok http 3000
-Set webhook:
 
-bash
-Copy code
-https://api.telegram.org/bot<YOUR_TOKEN>/setWebhook?url=<NGROK_URL>/telegram/webhook
-🧪 /check API Example
-http
-Copy code
-POST /check
-Content-Type: application/json
+🧪 Example cURL (Check API)
+curl -X POST http://localhost:3000/check \
+  -H "Content-Type: application/json" \
+  -d '{
+    "chain": "eth",
+    "targetAddress": "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045"
+  }'
 
-{
-  "chain": "eth",
-  "targetAddress": "0x..."
-}
-🧠 Interview Summary
-“This project demonstrates a polling-based AML Telegram bot with heuristic risk scoring across EVM chains and Solana, focusing on backend architecture, deduplication, and cost control.”
+🚧 Known Limitations
+
+ERC-20 tokens not decoded
+
+Swaps not analyzed
+
+Solana/Base/Avalanche tracking not enabled yet
+
+Free Etherscan API rate limits apply
 
 🔮 Future Improvements
-Paid AML provider integration
 
-Indexer-based tracking
+ERC-20 & swap decoding
 
-Telegram Web App dashboard
+Multi-chain indexers
 
-Advanced risk heuristics
+Address clustering
 
-Token / contract analysis
+Risk history over time
+
+Alert severity levels
+
+UI buttons instead of text commands
+
+🧠 Engineering Notes
+
+No paid AML APIs used
+
+Heuristic logic is transparent and explainable
+
+Soft-delete used for safety
+
+Polling chosen over WebSockets for reliability
+
+Designed for evaluation & discussion
 
 👤 Author
+
 Subhadip Mahanty
 B.Tech CSE
 Blockchain & Backend Developer
 
-📜 License
-MIT License
+GitHub: https://github.com/subha5554t
+
+Telegram Bot: https://t.me/SettlX_AML_Bot
