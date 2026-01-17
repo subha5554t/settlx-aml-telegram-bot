@@ -15,15 +15,13 @@ async function getWalletBalance(rpcUrl, address) {
  * This is acceptable and commonly used in demos/interviews
  */
 async function getWalletTransactions(address) {
-  const url = `https://eth.blockscout.com/api?module=account&action=txlist&address=${address}&sort=asc`;
+  const url = `https://api.etherscan.io/api?module=account&action=txlist&address=${address}&sort=asc&apikey=${process.env.ETHERSCAN_API_KEY}`;
   const res = await axios.get(url);
 
   if (res.data.status !== "1") {
-    console.warn("Blockscout returned no data");
     return [];
   }
 
-  console.log("Blockscout tx count:", res.data.result.length);
   return res.data.result;
 }
 
