@@ -7,7 +7,7 @@ const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOK
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 /**
- * Send message to Telegram chat
+ * Send message to Telegram
  */
 async function send(chatId, text) {
   try {
@@ -16,10 +16,7 @@ async function send(chatId, text) {
       text
     });
   } catch (err) {
-    console.error(
-      "❌ Telegram send failed:",
-      err.response?.data || err.message
-    );
+    console.error("Telegram send error:", err.message);
   }
 }
 
@@ -32,8 +29,6 @@ async function handle(update) {
   const chatId = update.message.chat.id;
   const text = update.message.text?.trim();
   if (!text) return;
-
-  console.log("➡️ Telegram message:", text);
 
   const userId = await db.getOrCreateUser(chatId);
   const session = state.get(chatId);
@@ -101,7 +96,7 @@ async function handle(update) {
     if (parts.length !== 3) {
       return send(
         chatId,
-        "❌ Usage:\n/check <chain> <wallet>\n\nExample:\n/check eth 0xd8dA6B..."
+        "❌ Usage:\n/check <chain> <wallet>\nExample:\n/check eth 0xd8dA6B..."
       );
     }
 
@@ -119,16 +114,15 @@ async function handle(update) {
       return send(
         chatId,
         `🔍 Wallet Risk Check\n\n` +
-          `Chain: ${chain.toUpperCase()}\n` +
-          `Address: ${address}\n\n` +
-          `Risk Score: ${r.riskScore}\n` +
-          `Risk Level: ${r.riskLevel}\n` +
-          `Reasons: ${r.reasons?.join(", ") || "N/A"}\n\n` +
-          `🔗 Explorer:\n${r.explorerLink}`
+        `Chain: ${chain.toUpperCase()}\n` +
+        `Address: ${address}\n\n` +
+        `Risk Score: ${r.riskScore}\n` +
+        `Risk Level: ${r.riskLevel}\n` +
+        `Reasons: ${r.reasons?.join(", ") || "N/A"}\n\n` +
+        `🔗 Explorer:\n${r.explorerLink}`
       );
-    } catch (err) {
-      console.error("Check error:", err.response?.data || err.message);
-      return send(chatId, "⚠️ Failed to check wallet. Please try again.");
+    } catch {
+      return send(chatId, "⚠️ Failed to check wallet.");
     }
   }
 
@@ -138,22 +132,24 @@ async function handle(update) {
   if (text.startsWith("/tracking")) {
     const parts = text.split(" ");
 
+    // Menu
     if (parts.length === 1) {
       return send(
         chatId,
         "📌 Tracking Menu\n\n" +
-          "/tracking add-new\n" +
-          "/tracking view-tracked\n" +
-          "/tracking remove <label>\n" +
-          "/tracking pause <label>"
+        "/tracking add-new\n" +
+        "/tracking view-tracked\n" +
+        "/tracking remove <label>"
       );
     }
 
+    // Add new
     if (parts[1] === "add-new") {
       state.set(chatId, { step: "chain" });
       return send(chatId, "Select chain: eth | base | avax | sol");
     }
 
+    // View tracked
     if (parts[1] === "view-tracked") {
       const rows = await db.listTracked(userId);
 
@@ -163,13 +159,30 @@ async function handle(update) {
 
       return send(
         chatId,
-        rows
-          .map(
-            (r, i) =>
-              `${i + 1}. ${r.label} (${r.chain.toUpperCase()})\n${r.address}`
-          )
-          .join("\n\n")
+        rows.map(
+          (r, i) =>
+            `${i + 1}. ${r.label} (${r.chain.toUpperCase()})\n${r.address}`
+        ).join("\n\n")
       );
+    }
+
+    // ✅ REMOVE TRACKING (THIS WAS MISSING)
+    if (parts[1] === "remove") {
+      if (!parts[2]) {
+        return send(chatId, "❌ Usage: /tracking remove <label>");
+      }
+
+      const label = parts.slice(2).join(" ");
+      const removed = await db.removeTrackedByLabel(userId, label);
+
+      if (!removed) {
+        return send(
+          chatId,
+          `⚠️ No active tracked wallet found with label "${label}"`
+        );
+      }
+
+      return send(chatId, `🗑️ Tracking removed for "${label}"`);
     }
 
     return send(chatId, "❌ Unknown tracking command");
