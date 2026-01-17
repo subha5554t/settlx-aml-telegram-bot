@@ -29,7 +29,7 @@ router.post("/", async (req, res) => {
     const txs = await evm.getWalletTransactions(targetAddress);
 
     // 2. Build wallet-level metrics
-    const metrics = evm.buildWalletMetrics(txs);
+    const metrics = evm.buildWalletMetrics(txs, targetAddress);
 
     // 3. Score AML risk using wallet behavior
     const scored = risk.score(metrics);
