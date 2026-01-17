@@ -1,49 +1,55 @@
 /**
  * Calculate AML-style risk score based on wallet behavior
- * Uses real wallet metrics (not dummy logic)
+ * Tuned for demo visibility while remaining explainable
  */
 module.exports.score = (metrics) => {
   let score = 0;
   const reasons = [];
 
-  // 1. Wallet age risk
-  if (metrics.walletAgeDays < 7) {
-    score += 25;
-    reasons.push("New wallet");
+  // 1. Wallet age
+  if (metrics.walletAgeDays === 0) {
+    score += 30;
+    reasons.push("Inactive or empty wallet");
   } else if (metrics.walletAgeDays < 30) {
-    score += 10;
-    reasons.push("Relatively new wallet");
-  }
-
-  // 2. Low historical activity
-  if (metrics.txCount < 10) {
-    score += 10;
-    reasons.push("Low historical transaction count");
-  }
-
-  // 3. High recent activity
-  if (metrics.recentTxCount > 10) {
     score += 20;
-    reasons.push("High recent transaction velocity");
+    reasons.push("Relatively new wallet");
+  } else {
+    score += 10;
+    reasons.push("Old wallet");
   }
 
-  // 4. Inflow vs outflow imbalance
-  if (
-    metrics.inflow > metrics.outflow * 3 &&
-    metrics.inflow > 1
-  ) {
-    score += 25;
-    reasons.push("Large inflow imbalance");
+  // 2. Transaction history
+  if (metrics.txCount === 0) {
+    score += 20;
+    reasons.push("No transaction history");
+  } else if (metrics.txCount < 20) {
+    score += 15;
+    reasons.push("Low transaction count");
+  } else {
+    score += 5;
+    reasons.push("High transaction count");
   }
 
-  // Cap score
+  // 3. Recent activity (24h)
+  if (metrics.recentTxCount > 0) {
+    score += 15;
+    reasons.push("Recent on-chain activity");
+  }
+
+  // 4. Flow behavior
+  if (metrics.inflow > metrics.outflow) {
+    score += 10;
+    reasons.push("Net inflow detected");
+  }
+
+  // Cap
   score = Math.min(score, 100);
 
   return {
     riskScore: score,
     riskLevel:
-      score >= 60 ? "High" :
-      score >= 30 ? "Medium" :
+      score >= 70 ? "High" :
+      score >= 40 ? "Medium" :
       "Low",
     reasons
   };
